@@ -27,8 +27,12 @@ class app:
 
         # Labels
         #           Time Display
-        self.time_display = tk.Label(root, text="00:00:00:0", font=('times', 20), bg=butc, relief='sunken')
+        self.time_display = tk.Label(root, text="00:00:00", font=('times', 20), bg=butc, relief='sunken')
         self.time_display.place(x=self.width/2, y=self.height/4.35, anchor='center')
+        #           Money earned display
+        tk.Label(root, text="$", font=('times', 20), bg=bgc).place(y=self.height/4.35, x=420, anchor='center')
+        self.earned_display = tk.Label(root, text='0.00', bg=butc, font=('times', 20), relief='sunken', anchor='w')
+        self.earned_display.place(x=470, y=self.height/4.35, width=75, anchor='center')
         #           Border
         tk.Label(root, relief='sunken', bg=butc).place(x=self.width/2, y=0, anchor='center', width=575, height=10)
         tk.Label(root, relief='sunken', bg=butc).place(x=self.width/2, y=self.height, anchor='center',
@@ -62,11 +66,13 @@ class app:
         # Refreshes every tenth of a second.
         if self.timer == False:
             return
-        time = time_controls.time_up()
-        formatted_time = time_controls.format_time(time)
+
+        temp_time = time_controls.time_up()
+        formatted_time = time_controls.format_time(temp_time)
+
 
         self.time_display.configure(text=formatted_time)
-        self.root.after(100, self.time_start)
+        self.time_display.after(1000, self.time_start)
 
     def timer_boolean(self):
         # Starts and pauses time_start from boolean value
@@ -79,8 +85,8 @@ class app:
     def time_stop(self):
         # Stops timer and saves current time
         self.timer = False
-        session_time = int(outsource.return_value('timelogs.txt', 'timestamp'))
-        outsource.replace_value('timelogs.txt', 'timestamp', 0)
+        session_time = int(time_controls.timestamp)
+        time_controls.timestamp = 0
         ftime = time_controls.format_time(session_time)
         self.time_display.configure(text=time_controls.format_time(0))
 
@@ -94,7 +100,8 @@ class app:
 class generic:
     # Houses frequently used generic methods.
 
-    def center_window(self, win, w, h):   # Window center/size
+    def center_window(self, win, w, h):   
+        # Window center/size
         win.update_idletasks()
         width = w
         height = h
@@ -102,13 +109,15 @@ class generic:
         y = (win.winfo_screenheight() // 2) - (height // 2)
         win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
-    def preferences(self):  # Sets global variables at program start
+    def preferences(self):  
+        # Sets global variables at program start
         # Function calls 'outsource.py'
         global bgc, butc
         bgc = outsource.pref('bgc')
         butc = outsource.pref('butc')
 
-    def verify(self):   # Initial method to verify necessary files
+    def verify(self):   
+        # Initial method to verify necessary files
         try:
             file = open('preferences.txt', 'r')
             file.close()
@@ -126,15 +135,17 @@ class generic:
             file.close()
         except FileNotFoundError:
             file = open('logs.txt', 'w')
-            file.write('Format:    Date - Time(hours:minutes:seconds:tenth of seconds)\n\n')
+            file.write('Format:    Date - Time(hours:minutes:seconds)\n\n')
             file.close()
 
-        file = open('timelogs.txt', 'w')
-        file.write('timestamp : 0\n')
-        file.close()
+        # - Ended up not needing to use a text file for this. It's more efficient without it.
+        # file = open('timelogs.txt', 'w')
+        # file.write('timestamp : 0\n')
+        # file.close()
         self.preferences()
 
-    def update(self, root):                       # Not done. Need to bind this to settings button in app
+    def update(self, root):
+        # Updates global variables. Currently not used.
         self.preferences()
         root.title(outsource.pref('title'))
 
