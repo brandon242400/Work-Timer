@@ -1,3 +1,4 @@
+# File used to handle time related things for main file
 import outsource
 global timestamp
 timestamp = 0

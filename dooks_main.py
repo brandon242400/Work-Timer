@@ -62,14 +62,15 @@ class app:
         self.root.mainloop()
 
     def time_start(self):
-        # Controls the main time display.
-        # Refreshes every tenth of a second.
+        # Controls the main time display and earned display. Refreshes every second.
         if self.timer == False:
             return
 
+        # Formatting time for display
         temp_time = time_controls.time_up()
         formatted_time = time_controls.format_time(temp_time)
 
+        # Calculating money earned based on users pay rate
 
         self.time_display.configure(text=formatted_time)
         self.time_display.after(1000, self.time_start)

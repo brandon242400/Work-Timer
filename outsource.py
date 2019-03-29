@@ -1,4 +1,4 @@
-# File made to hold all random methods to avoid cluttering up 'dooks_main'
+# File made to hold all random methods to avoid cluttering up the main file
 import datetime
 
 
