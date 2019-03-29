@@ -87,6 +87,7 @@ class app:
         outsource.enter_into_logs(ftime)
 
     def close_main(self):
+        # Used to close main window from a different class e.g. 'options'
         self.root.destroy()
 
 
