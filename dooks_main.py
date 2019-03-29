@@ -11,14 +11,14 @@ class app:
     # Main class responsible for GUI and most method calls
     def __init__(self):
         # Calling necessary starting method
-        generic.verify()
+        generic().verify()
 
         # Tkinter window configuration
         self.root = tk.Tk()
         root = self.root
         self.width = 600
         self.height = 300
-        generic.center_window(root, self.width, self.height)   # Window size initialization
+        generic().center_window(root, self.width, self.height)   # Window size initialization
         root.configure(bg=bgc)
         root.title(outsource.pref('title'))
 
@@ -93,7 +93,7 @@ class app:
 class generic:
     # Houses frequently used generic methods.
 
-    def center_window(win, w, h):   # Window center/size
+    def center_window(self, win, w, h):   # Window center/size
         win.update_idletasks()
         width = w
         height = h
@@ -101,13 +101,13 @@ class generic:
         y = (win.winfo_screenheight() // 2) - (height // 2)
         win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
-    def preferences():  # Sets global variables at program start
+    def preferences(self):  # Sets global variables at program start
         # Function calls 'outsource.py'
         global bgc, butc
         bgc = outsource.pref('bgc')
         butc = outsource.pref('butc')
 
-    def verify():   # Initial method to verify necessary files
+    def verify(self):   # Initial method to verify necessary files
         try:
             file = open('preferences.txt', 'r')
             file.close()
@@ -131,10 +131,10 @@ class generic:
         file = open('timelogs.txt', 'w')
         file.write('timestamp : 0\n')
         file.close()
-        generic.preferences()
+        self.preferences()
 
-    def update(root):                       # Not done. Need to bind this to settings button in app
-        generic.preferences()
+    def update(self, root):                       # Not done. Need to bind this to settings button in app
+        self.preferences()
         root.title(outsource.pref('title'))
 
 
@@ -143,7 +143,7 @@ class options:
 
     def __init__(self, mainApp):
         self.root = tk.Tk()
-        generic.center_window(self.root, 300, 400)
+        generic().center_window(self.root, 300, 400)
         self.root.configure(bg=bgc)
         root = self.root
         root.title(outsource.return_value('preferences.txt', 'title') + ' options')
@@ -207,7 +207,6 @@ class options:
         self.root.title(self.title_var.get() + ' options')
         if self.bgc_var.get() != old_bgc:
             self.confirm()
-            print('yes?')
         elif self.butc_var.get() != old_butc:
             self.confirm()
         else:
@@ -217,7 +216,7 @@ class options:
         self.window = tk.Tk()
         window = self.window
         window.title('Restart now?')
-        generic.center_window(window, 250, 175)
+        generic().center_window(window, 250, 175)
         window.configure(bg=bgc)
         message = '''Pay rate and title have been changed.\nFor color changes to take effect
 the application must be restarted.\nYou will lose any ongoing timer progress.\nRestart now?'''
