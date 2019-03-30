@@ -23,6 +23,9 @@ class app:
 
         # Variables
         self.timer = False
+        self.first_run = True
+        self.time_seconds = 0
+        self.earned = 0.0
 
         # Labels
         #           Time Display
@@ -74,6 +77,14 @@ class app:
         # Controls the main time display and earned display. Refreshes every second.
         if self.timer == False:
             return
+        
+        if self.first_run == True:
+            self.first_run = False
+            self.time_other()
+            self.root.after(60000, self.time_start)
+            return
+        
+        self.time_other()
 
         # Formatting time for display
         temp_time = time_controls.time_up()
@@ -85,7 +96,26 @@ class app:
         self.earned_display.configure(text="%.2f" % money)
 
         self.time_display.configure(text=formatted_time)
-        self.time_display.after(1000, self.time_start)
+        self.time_display.after(60000, self.time_start)
+    
+    def time_other(self):
+        if self.timer == False:
+            return
+        if time_controls.timestamp_single >= 60:
+            time_controls.timestamp_single = 0
+            return
+
+        # Formatting time for display
+        temp_time = time_controls.time_up_single()
+        formatted_time = time_controls.format_time(temp_time)
+
+        # Calculating money earned based on users pay rate
+        # time_hours = temp_time / 3600
+        # money = time_hours * wage
+        # self.earned_display.configure(text="%.2f" % money)
+
+        self.time_display.configure(text=formatted_time)
+        self.time_display.after(1000, self.time_other)
 
     def timer_boolean(self):
         # Starts and pauses time_start from boolean value
@@ -98,12 +128,14 @@ class app:
     def time_stop(self):
         # Stops timer and saves current time
         self.timer = False
-        session_time = int(time_controls.timestamp)
+        session_time = int(time_controls.get_time())
         time_controls.timestamp = 0
+        time_controls.timestamp_single = 0
         ftime = time_controls.format_time(session_time)
         self.time_display.configure(text=time_controls.format_time(0))
 
-        outsource.enter_into_logs(ftime)
+        outsource.enter_into_logs(ftime + "\nPay Rate : $%.2f" % wage + '\n' + 
+            "Amount Earned : $%.2f" % ((session_time/3600) * wage))
 
     def close_main(self):
         # Used to close main window from a different class e.g. 'options'
@@ -163,7 +195,7 @@ class generic:
             file.close()
         except FileNotFoundError:
             file = open('logs.txt', 'w')
-            file.write('Format:    Date - Time(hours:minutes:seconds)\n\n')
+            file.write('Format:    Date - Work_Time(hours:minutes:seconds)\n\n\n')
             file.close()
 
         # - Ended up not needing to use a text file for this. It's more efficient without it.
@@ -266,8 +298,8 @@ class options:
         window.title('Restart now?')
         generic().center_window(window, 250, 175)
         window.configure(bg=bgc)
-        message = '''Pay rate and title have been changed.\nFor color changes to take effect
-the application must be restarted.\nYou will lose any ongoing timer progress.\nRestart now?'''
+        message = '''Pay rate and title have been changed.\nFor color changes to take effect\n'''
+        message += '''the application must be restarted.\nYou will lose any ongoing timer progress.\nRestart now?'''
         tk.Label(window, text=message, font=('times', 12), bg=bgc, justify='center').place(x=125, y=50, anchor='center')
         tk.Button(window, text='Yes', bg=butc, font=('times', 18), command=lambda: self.confirm_yes()).place(
             x=75, y=130, anchor='center')
@@ -288,5 +320,6 @@ the application must be restarted.\nYou will lose any ongoing timer progress.\nR
         self.root.destroy()
 
 
+# Running application from here.
 if __name__ == "__main__":
     app()

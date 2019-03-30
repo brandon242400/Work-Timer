@@ -2,7 +2,7 @@
 import outsource
 global timestamp
 timestamp = 0
-
+timestamp_single = 0
 
 def time_up():
     ''' Returns current time in seconds and increments 'timestamp' by 1 s '''
@@ -11,8 +11,18 @@ def time_up():
     # time = int(time)
     # time += 1
     global timestamp
-    timestamp += 1
+    timestamp += 60
     return timestamp
+
+
+def get_time():
+    return timestamp + timestamp_single
+
+
+def time_up_single():
+    global timestamp_single
+    timestamp_single += 1
+    return timestamp_single + timestamp
 
 
 def format_time(time):
