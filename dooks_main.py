@@ -2,9 +2,8 @@
 import tkinter as tk
 import outsource
 import time_controls
-global bgc, butc
-bgc = ''
-butc = ''
+global bgc, butc, wage
+
 
 
 class app:
@@ -32,7 +31,7 @@ class app:
         #           Money earned display
         tk.Label(root, text="$", font=('times', 20), bg=bgc).place(y=self.height/4.35, x=420, anchor='center')
         self.earned_display = tk.Label(root, text='0.00', bg=butc, font=('times', 20), relief='sunken', anchor='w')
-        self.earned_display.place(x=470, y=self.height/4.35, width=75, anchor='center')
+        self.earned_display.place(x=470, y=self.height/4.35, width=85, anchor='center')
         #           Border
         tk.Label(root, relief='sunken', bg=butc).place(x=self.width/2, y=0, anchor='center', width=575, height=10)
         tk.Label(root, relief='sunken', bg=butc).place(x=self.width/2, y=self.height, anchor='center',
@@ -40,6 +39,9 @@ class app:
         tk.Label(root, relief='sunken', bg=butc).place(x=0, y=self.height/2, anchor='center', width=10, height=320)
         tk.Label(root, relief='sunken', bg=butc).place(x=self.width, y=self.height/2, anchor='center',
             width=10, height=320)
+        #           Payrate label
+        self.payrateL = tk.Label(root, text="Pay Rate: $%.2f" % float(wage), font=('times', 14, 'underline'), bg=bgc)
+        self.payrateL.place(x=75, y=25, anchor='center')
 
         # Buttons
         #           Quit
@@ -55,8 +57,15 @@ class app:
         self.stop_timer.place(x=350, y=self.height/2.5, anchor='center')
         #           Options button
         self.options = tk.Button(root, text='Options', font=('times', 14), command=lambda:
-            options(root), bg=butc)
+            options(root, self), bg=butc)
         self.options.place(x=50, y=200, anchor='center')
+        #           Payrate options
+        self.pay_button1 = tk.Button(root, text="Payrate 1: $%.2f" % float(outsource.return_value('preferences.txt', 'wage1')), bg=butc,
+            font=('times', 12), command=lambda: self.set_pay(1))
+        self.pay_button1.place(x=75, y=60, anchor='center')
+        self.pay_button2 = tk.Button(root, text="Payrate 2: $%.2f" % float(outsource.return_value('preferences.txt', 'wage2')), bg=butc,
+            font=('times', 12), command=lambda: self.set_pay(2))
+        self.pay_button2.place(x=75, y=100, anchor='center')
 
         # Mainloop. End of __init__
         self.root.mainloop()
@@ -71,6 +80,9 @@ class app:
         formatted_time = time_controls.format_time(temp_time)
 
         # Calculating money earned based on users pay rate
+        time_hours = temp_time / 3600
+        money = time_hours * wage
+        self.earned_display.configure(text="%.2f" % money)
 
         self.time_display.configure(text=formatted_time)
         self.time_display.after(1000, self.time_start)
@@ -96,6 +108,20 @@ class app:
     def close_main(self):
         # Used to close main window from a different class e.g. 'options'
         self.root.destroy()
+    
+    def set_pay(self, num):
+        # Sets the current value of 'wage' for monetary calculations
+        global wage
+        value = outsource.return_value('preferences.txt', 'wage' + str(num))
+        wage = float(value)
+        self.payrateL.configure(text="Pay Rate: $%.2f" % wage)
+
+    def update_main(self):
+        # Updates info in main window.
+        self.pay_button1.configure(text="Payrate 1: $%.2f" % float(outsource.return_value('preferences.txt', 'wage1')))
+        self.pay_button2.configure(text="Payrate 2: $%.2f" % float(outsource.return_value('preferences.txt', 'wage2')))
+        self.root.title(outsource.return_value('preferences.txt', 'title'))
+        self.payrateL.configure(text="Pay Rate: $%.2f" % wage)
 
 
 class generic:
@@ -113,9 +139,10 @@ class generic:
     def preferences(self):  
         # Sets global variables at program start
         # Function calls 'outsource.py'
-        global bgc, butc
+        global bgc, butc, wage
         bgc = outsource.pref('bgc')
         butc = outsource.pref('butc')
+        wage = float(outsource.return_value('preferences.txt', 'wage1'))
 
     def verify(self):   
         # Initial method to verify necessary files
@@ -154,13 +181,14 @@ class generic:
 class options:
     ''' Options tab to change settings for App '''
 
-    def __init__(self, mainApp):
+    def __init__(self, mainApp, mainInstance):
         self.root = tk.Tk()
         generic().center_window(self.root, 300, 400)
         self.root.configure(bg=bgc)
         root = self.root
         root.title(outsource.return_value('preferences.txt', 'title') + ' options')
         self.main = mainApp
+        self.mainInstance = mainInstance
 
         # Background color setting
         tk.Label(root, text='Background color (hex):', font=('times', 12), bg=bgc, relief='sunken').place(
@@ -209,6 +237,12 @@ class options:
         self.root.mainloop()
 
     def set_all(self):
+        global wage
+        if wage == float(outsource.return_value('preferences.txt', 'wage1')):
+            wage = float(self.wage1_var.get())
+        else:
+            wage = float(self.wage2_var.get())
+        
         old_bgc = bgc[1:]
         old_butc = butc[1:]
         outsource.replace_value('preferences.txt', 'bgc', '#' + self.bgc_var.get())
@@ -216,8 +250,9 @@ class options:
         outsource.replace_value('preferences.txt', 'wage1', self.wage1_var.get())
         outsource.replace_value('preferences.txt', 'wage2', self.wage2_var.get())
         outsource.replace_value('preferences.txt', 'title', self.title_var.get())
-        self.main.title(self.title_var.get())
+        self.mainInstance.update_main()
         self.root.title(self.title_var.get() + ' options')
+        
         if self.bgc_var.get() != old_bgc:
             self.confirm()
         elif self.butc_var.get() != old_butc:
