@@ -2,7 +2,7 @@
 import outsource
 global timestamp
 timestamp = 0
-timestamp_single = 0
+
 
 def time_up():
     ''' Returns current time in seconds and increments 'timestamp' by 1 s '''
@@ -11,27 +11,18 @@ def time_up():
     # time = int(time)
     # time += 1
     global timestamp
-    timestamp += 60
+    timestamp += 1
     return timestamp
-
-
-def get_time():
-    return timestamp + timestamp_single
-
-
-def time_up_single():
-    global timestamp_single
-    timestamp_single += 1
-    return timestamp_single + timestamp
 
 
 def format_time(time):
     ''' Formats time to fit into main window. EX - "00:00:00" '''
     time = int(time)
-    hours = int(time/3600)
-    left = time - (hours * 3600)
-    minutes = int(left/60)
-    left = left - (minutes * 60)
-    seconds = int(left)
-    formatted = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+    hours = int(time/36000)
+    left = time - (hours * 36000)
+    minutes = int(left/600)
+    left = left - (minutes * 600)
+    seconds = int(left/10)
+    left = left - (seconds * 10)
+    formatted = "{:02d}:{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds, left)
     return formatted

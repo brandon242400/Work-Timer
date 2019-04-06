@@ -2,6 +2,8 @@
 import tkinter as tk
 import outsource
 import time_controls
+from threading import Timer, Thread
+from time import time as time_module
 global bgc, butc, wage
 
 
@@ -24,12 +26,13 @@ class app:
         # Variables
         self.timer = False
         self.first_run = True
-        self.time_seconds = 0
-        self.earned = 0.0
+        self.last_time = 0
+        self.time_interval = 0.1
+        self.thread = 0
 
         # Labels
         #           Time Display
-        self.time_display = tk.Label(root, text="00:00:00", font=('times', 20), bg=butc, relief='sunken')
+        self.time_display = tk.Label(root, text="00:00:00:00", font=('times', 20), bg=butc, relief='sunken')
         self.time_display.place(x=self.width/2, y=self.height/4.35, anchor='center')
         #           Money earned display
         tk.Label(root, text="$", font=('times', 20), bg=bgc).place(y=self.height/4.35, x=420, anchor='center')
@@ -48,7 +51,7 @@ class app:
 
         # Buttons
         #           Quit
-        quit = tk.Button(root, text='Exit', font=('times', 17, 'bold'), command=lambda: root.destroy(), bg=butc)
+        quit = tk.Button(root, text='Exit', font=('times', 17, 'bold'), command=lambda: self.exit_program(), bg=butc)
         quit.place(x=self.width - 45, y=self.height - 40, anchor='center')
         #           Start/Pause Timer
         self.start_timer = tk.Button(root, text='Start/Pause', font=('times', 14), command=lambda:
@@ -80,62 +83,53 @@ class app:
         
         if self.first_run == True:
             self.first_run = False
-            self.time_other()
-            self.root.after(60000, self.time_start)
-            return
-        
-        self.time_other()
+            self.last_time = time_module() - 0.1
+            
 
         # Formatting time for display
         temp_time = time_controls.time_up()
         formatted_time = time_controls.format_time(temp_time)
 
         # Calculating money earned based on users pay rate
-        time_hours = temp_time / 3600
+        time_hours = temp_time / 36000
         money = time_hours * wage
         self.earned_display.configure(text="%.2f" % money)
-
         self.time_display.configure(text=formatted_time)
-        self.time_display.after(60000, self.time_start)
-    
-    def time_other(self):
-        if self.timer == False:
-            return
-        if time_controls.timestamp_single >= 60:
-            time_controls.timestamp_single = 0
-            return
 
-        # Formatting time for display
-        temp_time = time_controls.time_up_single()
-        formatted_time = time_controls.format_time(temp_time)
-
-        # Calculating money earned based on users pay rate
-        # time_hours = temp_time / 3600
-        # money = time_hours * wage
-        # self.earned_display.configure(text="%.2f" % money)
-
-        self.time_display.configure(text=formatted_time)
-        self.time_display.after(1000, self.time_other)
+        self.adjust_time_interval()
+        self.thread = Timer(self.time_interval, self.time_start)
+        self.thread.start()
 
     def timer_boolean(self):
         # Starts and pauses time_start from boolean value
         if self.timer == False:
             self.timer = True
-            app.time_start(self)
+            self.first_run = True
+            self.time_start()
         else:
             self.timer = False
+            self.thread = 0
+            self.thread = Timer(self.time_interval, self.time_start)
+        
+    def adjust_time_interval(self):
+        difference = time_module() - self.last_time
+        difference -= 0.1
+        self.time_interval -= (difference / 4)                               ######      Can't get this to work right
+        self.last_time = time_module()
 
     def time_stop(self):
         # Stops timer and saves current time
         self.timer = False
-        session_time = int(time_controls.get_time())
+        session_time = time_controls.timestamp
         time_controls.timestamp = 0
-        time_controls.timestamp_single = 0
         ftime = time_controls.format_time(session_time)
         self.time_display.configure(text=time_controls.format_time(0))
 
+        self.thread.cancel()
+        self.thread = Timer(self.time_interval, self.start_timer)
+
         outsource.enter_into_logs(ftime + "\nPay Rate : $%.2f" % wage + '\n' + 
-            "Amount Earned : $%.2f" % ((session_time/3600) * wage))
+            "Amount Earned : $%.2f" % ((session_time/36000) * wage))
 
     def close_main(self):
         # Used to close main window from a different class e.g. 'options'
@@ -154,6 +148,10 @@ class app:
         self.pay_button2.configure(text="Payrate 2: $%.2f" % float(outsource.return_value('preferences.txt', 'wage2')))
         self.root.title(outsource.return_value('preferences.txt', 'title'))
         self.payrateL.configure(text="Pay Rate: $%.2f" % wage)
+    
+    def exit_program(self):
+        self.timer = False
+        self.root.destroy()
 
 
 class generic:
@@ -323,3 +321,4 @@ class options:
 # Running application from here.
 if __name__ == "__main__":
     app()
+    
