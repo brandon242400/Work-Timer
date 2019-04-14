@@ -4,7 +4,6 @@ import outsource
 import time_controls
 from threading import Timer, Thread
 from time import time as time_module
-global bgc, butc, wage
 
 
 
@@ -48,30 +47,33 @@ class app:
         #           Payrate label
         self.payrateL = tk.Label(root, text="Pay Rate: $%.2f" % float(wage), font=('times', 14, 'underline'), bg=bgc)
         self.payrateL.place(x=75, y=25, anchor='center')
+        #           Other labels
+        tk.Label(root, text="Session Time:", font=('times', 15, 'underline'), bg=bgc).place(x=self.width/2, y=30, anchor='center')
+        tk.Label(root, text='Earned:', font=('times', 15, 'underline'), bg=bgc).place(x=470, y=33, anchor='center')
 
         # Buttons
         #           Quit
         quit = tk.Button(root, text='Exit', font=('times', 17, 'bold'), command=lambda: self.exit_program(), bg=butc)
         quit.place(x=self.width - 45, y=self.height - 40, anchor='center')
         #           Start/Pause Timer
-        self.start_timer = tk.Button(root, text='Start/Pause', font=('times', 14), command=lambda:
+        self.start_timer = tk.Button(root, text='Start', font=('times', 18), command=lambda:
             app.timer_boolean(self), bg=butc)
-        self.start_timer.place(x=268, y=self.height/2.5, anchor='center')
+        self.start_timer.place(x=250, y=self.height/2.2, anchor='center')
         #           Stop and save time
-        self.stop_timer = tk.Button(root, text='Stop', font=('times', 14), command=lambda:
+        self.stop_timer = tk.Button(root, text='Stop', font=('times', 18), command=lambda:
             app.time_stop(self), bg=butc)
-        self.stop_timer.place(x=350, y=self.height/2.5, anchor='center')
+        self.stop_timer.place(x=350, y=self.height/2.2, anchor='center')
         #           Options button
-        self.options = tk.Button(root, text='Options', font=('times', 14), command=lambda:
+        self.options = tk.Button(root, text='Options', font=('times', 16), command=lambda:
             options(root, self), bg=butc)
-        self.options.place(x=50, y=200, anchor='center')
+        self.options.place(x=60, y=250, anchor='center')
         #           Payrate options
         self.pay_button1 = tk.Button(root, text="Payrate 1: $%.2f" % float(outsource.return_value('preferences.txt', 'wage1')), bg=butc,
             font=('times', 12), command=lambda: self.set_pay(1))
-        self.pay_button1.place(x=75, y=60, anchor='center')
+        self.pay_button1.place(x=15, y=55)
         self.pay_button2 = tk.Button(root, text="Payrate 2: $%.2f" % float(outsource.return_value('preferences.txt', 'wage2')), bg=butc,
             font=('times', 12), command=lambda: self.set_pay(2))
-        self.pay_button2.place(x=75, y=100, anchor='center')
+        self.pay_button2.place(x=15, y=105)
 
         # Mainloop. End of __init__
         self.root.mainloop()
@@ -105,31 +107,46 @@ class app:
         if self.timer == False:
             self.timer = True
             self.first_run = True
+            self.start_timer.configure(text="Pause")
             self.time_start()
         else:
             self.timer = False
             self.thread = 0
+            self.start_timer.configure(text="Start")
             self.thread = Timer(self.time_interval, self.time_start)
         
     def adjust_time_interval(self):
+        # Adjusts the time interval so the timer stays accurate despite the time taken to run
         difference = time_module() - self.last_time
         difference -= 0.1
-        self.time_interval -= (difference / 4)                               ######      Can't get this to work right
+        self.time_interval -= (difference)
         self.last_time = time_module()
 
     def time_stop(self):
         # Stops timer and saves current time
         self.timer = False
         session_time = time_controls.timestamp
-        time_controls.timestamp = 0
         ftime = time_controls.format_time(session_time)
         self.time_display.configure(text=time_controls.format_time(0))
 
-        self.thread.cancel()
-        self.thread = Timer(self.time_interval, self.start_timer)
-
         outsource.enter_into_logs(ftime + "\nPay Rate : $%.2f" % wage + '\n' + 
             "Amount Earned : $%.2f" % ((session_time/36000) * wage))
+        
+        self.session_stats_display()
+    
+    def session_stats_display(self):
+        window = tk.Tk()
+        height = 200
+        width = 300
+        generic().center_window(window, width, height)
+        window.configure(bg=butc)
+        window.title("Session summary")
+        tk.Label(window, text="Hourly Rate: $" + str(wage), font=('times', 14), bg=bgc, relief='sunken').place(x=width/2, y=50, anchor='center')
+        tk.Label(window, text="Time Worked: " + time_controls.format_time(time_controls.timestamp), font=('times', 14), 
+            bg=bgc, relief='sunken').place(x=width/2, y=100, anchor='center')
+        earned = (time_controls.timestamp / 36000) * wage
+        tk.Label(window, text="Earned: ${0:.3f}".format(earned), font=('times', 14), bg=bgc).place(x=width/2, y=150, anchor='center')
+        time_controls.timestamp = 0
 
     def close_main(self):
         # Used to close main window from a different class e.g. 'options'
@@ -213,7 +230,7 @@ class options:
 
     def __init__(self, mainApp, mainInstance):
         self.root = tk.Tk()
-        generic().center_window(self.root, 300, 400)
+        generic().center_window(self.root, 300, 440)
         self.root.configure(bg=bgc)
         root = self.root
         root.title(outsource.return_value('preferences.txt', 'title') + ' options')
@@ -253,9 +270,13 @@ class options:
 
         # Buttons
         tk.Button(root, text='Apply and Close', font=('times', 16, 'bold'), command=lambda: options.set_all(self),
-            bg=butc).place(x=100, y=360, anchor='center', height=40)
+            bg=butc).place(x=100, y=400, anchor='center', height=40)
         tk.Button(root, text='Close', font=('times', 18, 'bold'), bg=butc, command=lambda: root.destroy()).place(
-            x=240, y=360, anchor='center', height=40)
+            x=240, y=400, anchor='center', height=40)
+        tk.Button(root, text="Clear Logs", font=('times', 12), bg=butc, command=lambda: self.clear_logs()).place(
+            x=20, y=290)
+        tk.Button(root, text="Clear Preferences", font=('times', 12), bg=butc, command=lambda: self.confirm_preferences()).place(
+            x=20, y=330)
 
         # Misc
         tk.Label(root, bg=butc, relief='sunken').place(x=150, y=122, anchor='center', width=290, height=7)
@@ -316,6 +337,32 @@ class options:
     def confirm_no(self):
         self.window.destroy()
         self.root.destroy()
+    
+    def clear_logs(self):
+        from os import remove
+        remove("logs.txt")
+        generic().verify()
+    
+    def confirm_preferences(self):
+        window = tk.Tk()
+        window.title('Confirm')
+        window.configure(bg=bgc)
+        generic().center_window(window, 225, 180)
+        tk.Label(window, text="Clearing preferences will\nrestart the program. Are you\nsure you want to do that?",
+            bg=bgc, font=('times', 13)).place(x=225/2, y=40, anchor='center')
+        tk.Button(window, text='Yes', bg=butc, font=('times', 15, 'bold'), command=lambda: self.clear_preferences(window)).place(
+            x=225/3, y=130, anchor='center')
+        tk.Button(window, text='No', bg=butc, font=('times', 15, 'bold'), command=lambda: window.destroy()).place(
+            x=(225*2)/3, y=130, anchor='center')
+    
+    def clear_preferences(self, win):
+        from os import remove
+        win.destroy()
+        remove("preferences.txt")
+        self.root.destroy()
+        self.main.destroy()
+        generic().verify()
+        app()
 
 
 # Running application from here.
